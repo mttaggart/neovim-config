@@ -249,6 +249,7 @@ return {
         "ron",
         "rust",
         "toml",
+        "hcl",
       },
     },
   },

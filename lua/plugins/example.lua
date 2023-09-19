@@ -233,6 +233,7 @@ return {
     opts = {
       ensure_installed = {
         "bash",
+        "haskell",
         "html",
         "javascript",
         "json",

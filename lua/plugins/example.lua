@@ -91,6 +91,8 @@ return {
     opts = {
       servers = {
         -- Ensure mason installs the server
+        pyright = {},
+        ruff_lsp = {},
         rust_analyzer = {
           keys = {
             { "K", "<cmd>RustHoverActions<cr>", desc = "Hover Actions (Rust)" },
@@ -142,6 +144,14 @@ return {
           local rust_tools_opts = require("lazyvim.util").opts("rust-tools.nvim")
           require("rust-tools").setup(vim.tbl_deep_extend("force", rust_tools_opts or {}, { server = opts }))
           return true
+        end,
+        ruff_lsp = function()
+          require("lazyvim.util").on_attach(function(client, _)
+            if client.name == "ruff_lsp" then
+              -- Disable hover in favor of Pyright
+              client.server_capabilities.hoverProvider = false
+            end
+          end)
         end,
       },
     },
@@ -252,6 +262,10 @@ return {
         "toml",
         "hcl",
       },
+      autotag = {
+        -- Setup autotag using treesitter config.
+        enable = true,
+      },
     },
   },
 
@@ -360,4 +374,47 @@ return {
       })
     end,
   },
+}, {
+  "mfussenegger/nvim-dap",
+  optional = true,
+  dependencies = {
+    "mfussenegger/nvim-dap-python",
+    -- stylua: ignore
+    keys = {
+      { "<leader>dPt", function() require('dap-python').test_method() end, desc = "Debug Method" },
+      { "<leader>dPc", function() require('dap-python').test_class() end, desc = "Debug Class" },
+    },
+    config = function()
+      local path = require("mason-registry").get_package("debugpy"):get_install_path()
+      require("dap-python").setup(path .. "/venv/bin/python")
+    end,
+  },
+}, {
+  "mfussenegger/nvim-dap-python",
+  -- stylua: ignore
+  keys = {
+    { "<leader>dPt", function() require('dap-python').test_method() end, desc = "Debug Method" },
+    { "<leader>dPc", function() require('dap-python').test_class() end, desc = "Debug Class" },
+  },
+  config = function()
+    local path = require("mason-registry").get_package("debugpy"):get_install_path()
+    require("dap-python").setup(path .. "/venv/bin/python")
+  end,
+}, {
+  "linux-cultist/venv-selector.nvim",
+  cmd = "VenvSelect",
+  opts = function(_, opts)
+    if require("lazyvim.util").has("nvim-dap-python") then
+      opts.dap_enabled = true
+    end
+    return vim.tbl_deep_extend("force", opts, {
+      name = {
+        "venv",
+        ".venv",
+        "env",
+        ".env",
+      },
+    })
+  end,
+  keys = { { "<leader>cv", "<cmd>:VenvSelect<cr>", desc = "Select VirtualEnv" } },
 }
